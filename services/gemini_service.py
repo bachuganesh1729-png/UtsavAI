@@ -161,7 +161,7 @@ def _classify_api_error(exc: Exception) -> AIError:
         return AIError(
             kind=AIErrorKind.TIMEOUT,
             message="The request to Gemini timed out. Please check your connection and try again.",
-            detail="Request timed at the configured HTTP timeout",
+            detail="Gemini request timed out;check API connectivity and timeout configuration",
         )
     return AIError(
         kind=AIErrorKind.API_ERROR,
