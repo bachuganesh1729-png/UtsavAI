@@ -85,7 +85,7 @@ class AIResult:
 
 def _build_client(config: AppConfig):
     """
-    Build and return a google.genai.Client configured with a 30s timeout.
+    Build and return a google.genai.Client configured with a 120s timeout.
 
     Returns None if the API key is absent (avoids import error when key missing).
     Never logs or exposes the API key.
@@ -98,7 +98,7 @@ def _build_client(config: AppConfig):
 
         return genai.Client(
             api_key=config.gemini_api_key,
-            http_options=types.HttpOptions(timeout=30.0),
+            http_options=types.HttpOptions(timeout=120_000),
         )
     except Exception as exc:
         logger.error("Failed to build Gemini client: %s", exc)
@@ -161,7 +161,7 @@ def _classify_api_error(exc: Exception) -> AIError:
         return AIError(
             kind=AIErrorKind.TIMEOUT,
             message="The request to Gemini timed out. Please check your connection and try again.",
-            detail="Request timed out after 30s",
+            detail="Request timed at the configured HTTP timeout",
         )
     return AIError(
         kind=AIErrorKind.API_ERROR,
