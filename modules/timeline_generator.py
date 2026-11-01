@@ -219,7 +219,7 @@ def _render_task_row(task: TimelineTask) -> None:
     """Render a single task row with status update control."""
     overdue_style = "background:#fff1f2; border-left:4px solid #542C46;" if task.is_overdue else ""
     completed_style = "opacity:0.6;" if task.status == "completed" else ""
-    priority_colour = _PRIORITY_COLOURS.get(task.priority, "#C9A84C")
+    priority_colour = _PRIORITY_COLOURS.get(task.priority, "#C49A55")
 
     with st.expander(
         f"{format_status_badge(task.status)}  |  "

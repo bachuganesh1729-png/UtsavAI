@@ -95,7 +95,7 @@ def _render_vendor_body(event: dict) -> None:
     tab_view, tab_add = st.tabs(["📋 All Vendors", "➕ Add Vendor"])
 
     with tab_view:
-        _render_vendors_tab(event_id, vendors)
+        _render_vendors_tab(event_id, vendors, event_type)
 
     with tab_add:
         _render_add_vendor_tab(event_id)
@@ -189,7 +189,7 @@ def _render_vendor_metrics(vendors: list) -> None:
 
 # ── Vendors view tab ──────────────────────────────────────────────────────────
 
-def _render_vendors_tab(event_id: int, vendors: list) -> None:
+def _render_vendors_tab(event_id: int, vendors: list, event_type: str = "Wedding") -> None:
     # Filter controls
     col_f1, col_f2 = st.columns(2)
     with col_f1:
@@ -228,6 +228,32 @@ def _render_vendors_tab(event_id: int, vendors: list) -> None:
         for vendor in cat_vendors:
             _render_vendor_card(event_id, vendor)
         st.markdown("---")
+
+    # Reset to default vendors with confirmation
+    with st.expander("🔄 Reset to Default Vendors", expanded=False):
+        st.markdown(
+            f"Resetting will delete all current vendors and reload the default checklist for a **{event_type}**."
+        )
+        confirm_reset = st.checkbox(
+            "I understand this will delete all current vendors and replace them with defaults.",
+            key=f"confirm_reset_vendors_{event_id}",
+        )
+        if st.button("Reset to Default Vendors", type="secondary", disabled=not confirm_reset, key=f"btn_reset_vendors_{event_id}"):
+            for v in vendors:
+                delete_vendor(v["id"])
+            defaults = get_default_vendors(event_type)
+            for v in defaults:
+                create_vendor(
+                    event_id=event_id,
+                    category=v.get("category", "Other"),
+                    name=v.get("name", "TBD"),
+                    contact="",
+                    status="pending",
+                    notes=v.get("notes", ""),
+                )
+            st.session_state.pop(f"confirm_reset_vendors_{event_id}", None)
+            st.success("✅ Vendors reset to defaults.")
+            st.rerun()
 
 
 def _render_vendor_card(event_id: int, vendor: dict) -> None:

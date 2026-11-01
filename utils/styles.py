@@ -20,6 +20,7 @@ The streamlit import is localised to functions that require it.
 
 from __future__ import annotations
 
+import html
 from pathlib import Path
 
 
@@ -97,11 +98,15 @@ def render_metric_card(
     Returns:
         HTML string — safe to pass to st.markdown(..., unsafe_allow_html=True).
     """
-    subtitle_html = f'<p class="metric-subtitle">{subtitle}</p>' if subtitle else ""
+    title_esc = html.escape(str(title))
+    value_esc = html.escape(str(value))
+    subtitle_esc = html.escape(str(subtitle)) if subtitle else ""
+    colour_esc = html.escape(str(colour))
+    subtitle_html = f'<p class="metric-subtitle">{subtitle_esc}</p>' if subtitle else ""
     return (
-        f'<div class="metric-card" style="border-top: 3px solid {colour};">'
-        f'  <p class="metric-title">{title}</p>'
-        f'  <p class="metric-value">{value}</p>'
+        f'<div class="metric-card" style="border-top: 3px solid {colour_esc};">'
+        f'  <p class="metric-title">{title_esc}</p>'
+        f'  <p class="metric-value">{value_esc}</p>'
         f"  {subtitle_html}"
         f"</div>"
     )
@@ -113,17 +118,20 @@ def render_status_pill(status: str) -> str:
 
     The CSS class is derived from the status string (lowercased, underscores → hyphens).
     """
-    css_class = f"status-pill status-{status.lower().replace(' ', '-').replace('_', '-')}"
-    label = status.replace("_", " ").title()
+    status_str = str(status)
+    css_class = f"status-pill status-{html.escape(status_str.lower().replace(' ', '-').replace('_', '-'))}"
+    label = html.escape(status_str.replace("_", " ").title())
     return f'<span class="{css_class}">{label}</span>'
 
 
 def render_section_header(title: str, subtitle: str = "") -> str:
     """Return HTML for a gold-accented section header with optional subtitle."""
-    subtitle_html = f'<p class="section-subtitle">{subtitle}</p>' if subtitle else ""
+    title_esc = html.escape(str(title))
+    subtitle_esc = html.escape(str(subtitle)) if subtitle else ""
+    subtitle_html = f'<p class="section-subtitle">{subtitle_esc}</p>' if subtitle else ""
     return (
         f'<div class="section-header">'
-        f'  <h2 class="section-title">{title}</h2>'
+        f'  <h2 class="section-title">{title_esc}</h2>'
         f"  {subtitle_html}"
         f"</div>"
     )
@@ -139,8 +147,9 @@ def render_info_banner(message: str, banner_type: str = "info") -> str:
     """
     icons = {"info": "ℹ️", "warning": "⚠️", "success": "✅", "error": "❌"}
     icon = icons.get(banner_type, "ℹ️")
+    safe_banner_type = html.escape(str(banner_type))
     return (
-        f'<div class="banner banner-{banner_type}">'
+        f'<div class="banner banner-{safe_banner_type}">'
         f"  {icon} {message}"
         f"</div>"
     )
@@ -162,10 +171,14 @@ def render_feature_card(
         accent_class: CSS class for the coloured top border.
                       One of: card-plum-top, card-gold-top, card-rose-top, card-sage-top.
     """
+    icon_esc = html.escape(str(icon))
+    title_esc = html.escape(str(title))
+    desc_esc = html.escape(str(description))
+    accent_class_esc = html.escape(str(accent_class))
     return (
-        f'<div class="feature-card {accent_class}">'
-        f'  <span class="icon">{icon}</span>'
-        f'  <p class="feature-title">{title}</p>'
-        f'  <p class="feature-desc">{description}</p>'
+        f'<div class="feature-card {accent_class_esc}">'
+        f'  <span class="icon">{icon_esc}</span>'
+        f'  <p class="feature-title">{title_esc}</p>'
+        f'  <p class="feature-desc">{desc_esc}</p>'
         f"</div>"
     )

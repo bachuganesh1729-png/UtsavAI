@@ -17,6 +17,8 @@ Run with:
 
 from __future__ import annotations
 
+import html
+
 import streamlit as st
 
 # ── Page config (must be the first Streamlit call) ────────────────────────────
@@ -158,11 +160,12 @@ def _render_sidebar(config) -> str:
         # ── Active event indicator ────────────────────────────────────────────
         active_id = st.session_state.get("active_event_id")
         if active_id:
+            safe_id = html.escape(str(active_id))
             st.markdown(
                 f"<div style='color:rgba(250,247,242,0.65); font-size:0.75rem;"
                 f" text-align:center; font-family:DM Sans,system-ui,sans-serif;'>"
                 f"📋 Active event<br>"
-                f"<strong style='color:{_IVORY}; font-size:0.85rem;'>#{active_id}</strong>"
+                f"<strong style='color:{_IVORY}; font-size:0.85rem;'>#{safe_id}</strong>"
                 f"</div>",
                 unsafe_allow_html=True,
             )
@@ -176,11 +179,12 @@ def _render_sidebar(config) -> str:
 
         # ── Model info (dev reference) ────────────────────────────────────────
         if config.ai_available:
+            safe_model = html.escape(str(config.gemini_model))
             st.markdown(
                 f"<div style='color:rgba(250,247,242,0.28); font-size:0.65rem;"
                 f" text-align:center; margin-top:1rem;"
                 f" font-family:DM Sans,system-ui,sans-serif;'>"
-                f"{config.gemini_model}</div>",
+                f"{safe_model}</div>",
                 unsafe_allow_html=True,
             )
 

@@ -46,6 +46,7 @@ from utils.validators import (
     validate_budget,
     validate_event_date,
     validate_free_text,
+    validate_ai_event_plan,
 )
 from utils.formatters import (
     format_currency,
@@ -308,12 +309,19 @@ def _generate_plan(
             preferences=preferences,
         )
         if result.success:
-            return result.data
-        # AI failed — show warning and fall through to default
-        st.warning(
-            f"⚠️ AI plan generation failed: {result.error.message} "
-            "A rule-based plan has been generated instead."
-        )
+            val_ok, val_err = validate_ai_event_plan(result.data, total_budget)
+            if val_ok:
+                return result.data
+            st.warning(
+                f"⚠️ AI plan response failed validation: {val_err}. "
+                "A rule-based plan has been generated instead."
+            )
+        else:
+            # AI failed — show warning and fall through to default
+            st.warning(
+                f"⚠️ AI plan generation failed: {result.error.message} "
+                "A rule-based plan has been generated instead."
+            )
 
     # Rule-based fallback
     return _build_fallback_plan(

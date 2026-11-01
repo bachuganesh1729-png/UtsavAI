@@ -17,7 +17,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from utils.validators import validate_task_deadline
@@ -78,6 +78,8 @@ def validate_and_filter_tasks(
     Validation rules:
     - Task description must be a non-empty string.
     - Deadline must be a valid ISO date on or before event_date.
+    - Overdue deadlines are preserved (never silently moved to today).
+    - Only truly unparseable date strings (malformed ISO) are filtered out.
     - Priority must be one of: high, medium, low.
 
     Args:
@@ -93,10 +95,16 @@ def validate_and_filter_tasks(
 
     for i, raw in enumerate(raw_tasks):
         task_text = str(raw.get("task", "")).strip()
-        deadline  = str(raw.get("deadline", "")).strip()
-        priority  = str(raw.get("priority", "medium")).strip().lower()
-        status    = str(raw.get("status", "pending")).strip().lower()
-        notes     = str(raw.get("notes", ""))
+
+        raw_dl = raw.get("deadline", "")
+        if isinstance(raw_dl, (date, datetime)):
+            deadline = raw_dl.isoformat()[:10]
+        else:
+            deadline = str(raw_dl).strip()
+
+        priority = str(raw.get("priority", "medium")).strip().lower()
+        status   = str(raw.get("status", "pending")).strip().lower()
+        notes    = str(raw.get("notes", ""))
 
         if not task_text:
             logger.warning("Task[%d] skipped: empty task description.", i)
@@ -137,7 +145,10 @@ def validate_and_filter_tasks(
 # ── Summary ───────────────────────────────────────────────────────────────────
 
 def compute_timeline_summary(tasks: list[TimelineTask]) -> TimelineSummary:
-    """Compute aggregated metrics from a list of TimelineTask objects."""
+    """
+    Compute aggregated metrics from a list of TimelineTask objects.
+    completion_pct counts 'completed' tasks only.
+    """
     total     = len(tasks)
     completed = sum(1 for t in tasks if t.status == "completed")
     in_prog   = sum(1 for t in tasks if t.status == "in_progress")
@@ -165,8 +176,9 @@ def generate_default_timeline(
     """
     Generate a rule-based preparation timeline when AI is unavailable.
 
-    Tasks are spaced proportionally before the event date. If the event
-    is less than 30 days away, only near-term tasks are included.
+    Task deadlines are computed relative to event_date.
+    Overdue tasks preserve their original deadline (never shifted to today).
+    Does NOT crash if event_date is in the past.
 
     Args:
         event_type:     Type of celebration (e.g., "Wedding").
@@ -176,13 +188,10 @@ def generate_default_timeline(
         Sorted list of TimelineTask objects (all deadlines <= event_date).
     """
     try:
-        event_date = date.fromisoformat(event_date_str)
-    except ValueError:
+        event_date = date.fromisoformat(event_date_str.strip())
+    except (ValueError, AttributeError):
         logger.error("Invalid event_date_str: %s", event_date_str)
         return []
-
-    today = date.today()
-    days_ahead = (event_date - today).days
 
     # Template: (days_before_event, task, priority)
     _TEMPLATES: dict[str, list[tuple[int, str, str]]] = {
@@ -222,9 +231,6 @@ def generate_default_timeline(
 
     for days_before, task_text, priority in templates:
         deadline = event_date - timedelta(days=days_before)
-        if deadline < today:
-            # Task deadline has passed — include it as overdue so user is aware
-            deadline = today  # Shift to today to allow entry, mark as pending
         if deadline > event_date:
             continue  # Skip tasks that fall after the event
 
@@ -237,7 +243,7 @@ def generate_default_timeline(
             )
         )
 
-    # Sort by deadline
+    # Sort by deadline ascending
     tasks.sort(key=lambda t: t.deadline_date)
     logger.info(
         "Generated %d default timeline tasks for event type '%s' on %s.",

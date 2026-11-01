@@ -13,9 +13,10 @@ Layer contract: utils/ may only import from the Python standard library.
 
 from __future__ import annotations
 
+import math
 import re
 from datetime import date, datetime
-from typing import Any
+from typing import Any, Optional
 
 
 # ── Constants ─────────────────────────────────────────────────────────────────
@@ -91,13 +92,37 @@ def validate_guest_count(count: Any) -> tuple[bool, str]:
     Validate guest count.
 
     Rules:
-    - Must be an integer (or a string representation of one).
+    - Must be an integer (or a whole number float like 100.0, or string of one).
+    - Reject booleans.
+    - Reject NaN and infinity.
+    - Reject fractional values (e.g. 3.7).
+    - Reject negative values.
     - Between 1 and 100,000 inclusive.
     """
-    try:
-        value = int(count)
-    except (TypeError, ValueError):
+    if isinstance(count, bool) or count is None:
         return _err("Guest count must be a whole number.")
+
+    if isinstance(count, (int, float)):
+        if isinstance(count, float):
+            if not math.isfinite(count):
+                return _err("Guest count must be a finite number.")
+            if not count.is_integer():
+                return _err("Guest count must be a whole number.")
+        value = int(count)
+    elif isinstance(count, str):
+        s = count.strip()
+        try:
+            f = float(s)
+        except (ValueError, TypeError, OverflowError):
+            return _err("Guest count must be a whole number.")
+        if not math.isfinite(f) or not f.is_integer():
+            return _err("Guest count must be a whole number.")
+        value = int(f)
+    else:
+        return _err("Guest count must be a whole number.")
+
+    if value < 0:
+        return _err("Guest count cannot be negative.")
     if value < _MIN_GUEST_COUNT:
         return _err(f"Guest count must be at least {_MIN_GUEST_COUNT}.")
     if value > _MAX_GUEST_COUNT:
@@ -110,17 +135,22 @@ def validate_budget(budget: Any) -> tuple[bool, str]:
     Validate a monetary budget amount (INR).
 
     Rules:
-    - Must be a positive number.
+    - Must be a positive numeric value.
+    - Reject booleans.
+    - Reject NaN and infinity.
+    - Reject negative values.
     - Between 100 and 1,000,000,000.
-    - Not NaN or infinite.
     """
+    if isinstance(budget, bool) or budget is None:
+        return _err("Budget must be a numeric value.")
     try:
         value = float(budget)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return _err("Budget must be a numeric value.")
-    import math
-    if math.isnan(value) or math.isinf(value):
+    if not math.isfinite(value):
         return _err("Budget must be a finite number.")
+    if value < 0.0:
+        return _err("Budget cannot be negative.")
     if value < _MIN_BUDGET:
         return _err(f"Budget must be at least ₹{_MIN_BUDGET:,.0f}.")
     if value > _MAX_BUDGET:
@@ -129,13 +159,21 @@ def validate_budget(budget: Any) -> tuple[bool, str]:
 
 
 def validate_amount(amount: Any, field_name: str = "Amount") -> tuple[bool, str]:
-    """Validate a non-negative monetary amount (used for budget_items)."""
+    """
+    Validate a non-negative monetary amount (used for budget_items).
+
+    Rules:
+    - Must be a non-negative number.
+    - Reject booleans.
+    - Reject NaN and infinity.
+    """
+    if isinstance(amount, bool) or amount is None:
+        return _err(f"{field_name} must be a numeric value.")
     try:
         value = float(amount)
-    except (TypeError, ValueError):
+    except (TypeError, ValueError, OverflowError):
         return _err(f"{field_name} must be a numeric value.")
-    import math
-    if math.isnan(value) or math.isinf(value):
+    if not math.isfinite(value):
         return _err(f"{field_name} must be a finite number.")
     if value < 0.0:
         return _err(f"{field_name} cannot be negative.")
@@ -152,6 +190,8 @@ def validate_event_date(event_date: Any) -> tuple[bool, str]:
     - Must be a date or datetime object, or an ISO-format date string (YYYY-MM-DD).
     - Must not be in the past (compared to today's date).
     """
+    if isinstance(event_date, bool):
+        return _err("Event date must be a date or ISO-format date string.")
     if isinstance(event_date, datetime):
         event_date = event_date.date()
 
@@ -160,7 +200,7 @@ def validate_event_date(event_date: Any) -> tuple[bool, str]:
     elif isinstance(event_date, str):
         try:
             parsed = date.fromisoformat(event_date.strip())
-        except ValueError:
+        except (ValueError, TypeError):
             return _err("Event date must be in YYYY-MM-DD format.")
     else:
         return _err("Event date must be a date or ISO-format date string.")
@@ -179,7 +219,10 @@ def validate_task_deadline(
     Rules:
     - Must be a valid date (ISO string or date object).
     - If event_date is provided, deadline must be on or before the event date.
+    - Still return (True, "") if event_date is invalid or missing.
     """
+    if isinstance(deadline, bool):
+        return _err("Task deadline must be a date or ISO-format date string.")
     if isinstance(deadline, datetime):
         deadline = deadline.date()
 
@@ -188,7 +231,7 @@ def validate_task_deadline(
     elif isinstance(deadline, str):
         try:
             parsed_deadline = date.fromisoformat(deadline.strip())
-        except ValueError:
+        except (ValueError, TypeError):
             return _err("Task deadline must be in YYYY-MM-DD format.")
     else:
         return _err("Task deadline must be a date or ISO-format date string.")
@@ -196,11 +239,14 @@ def validate_task_deadline(
     if event_date is not None:
         if isinstance(event_date, datetime):
             event_date = event_date.date()
-        if isinstance(event_date, str):
+        elif isinstance(event_date, str):
             try:
                 event_date = date.fromisoformat(event_date.strip())
-            except ValueError:
-                pass  # Cannot cross-validate; skip
+            except (ValueError, TypeError):
+                event_date = None  # Cannot cross-validate; skip
+        elif not isinstance(event_date, date):
+            event_date = None
+
         if isinstance(event_date, date) and parsed_deadline > event_date:
             return _err("Task deadline cannot be after the event date.")
 
@@ -232,7 +278,9 @@ def validate_priority(priority: Any, allowed: list[str]) -> tuple[bool, str]:
 
 # ── AI response validators ────────────────────────────────────────────────────
 
-def validate_ai_event_plan(data: Any) -> tuple[bool, str]:
+def validate_ai_event_plan(
+    data: Any, total_budget: Optional[float] = None
+) -> tuple[bool, str]:
     """
     Schema-validate an AI-generated event plan dict.
 
@@ -245,11 +293,27 @@ def validate_ai_event_plan(data: Any) -> tuple[bool, str]:
         "vendor_checklist": list[{category, name_suggestion, notes}],
         "cultural_notes": str   (optional)
     }
+
+    Validation rules:
+    - plan_data is a dict
+    - Required fields: event_summary (non-empty str), key_highlights (list),
+      budget_breakdown (dict), timeline_milestones (list), vendor_checklist (list)
+    - budget_breakdown values must be finite non-negative numbers
+    - If total_budget is provided, sum must not exceed total_budget * 1.05 (5% tolerance)
+    - timeline_milestones entries: must have task (non-empty str), deadline (valid ISO date),
+      priority (in ["high", "medium", "low"])
+    - vendor_checklist entries: must have category (non-empty str)
     """
     if not isinstance(data, dict):
         return _err("AI response must be a JSON object.")
 
-    required = {"event_summary", "key_highlights", "budget_breakdown", "timeline_milestones", "vendor_checklist"}
+    required = {
+        "event_summary",
+        "key_highlights",
+        "budget_breakdown",
+        "timeline_milestones",
+        "vendor_checklist",
+    }
     missing = required - data.keys()
     if missing:
         return _err(f"AI response missing required fields: {', '.join(sorted(missing))}.")
@@ -263,10 +327,28 @@ def validate_ai_event_plan(data: Any) -> tuple[bool, str]:
     if not isinstance(data["budget_breakdown"], dict):
         return _err("'budget_breakdown' must be a JSON object.")
 
-    # Validate each budget entry is numeric
+    # Validate each budget entry is numeric, finite, non-negative
+    total_breakdown = 0.0
     for category, amount in data["budget_breakdown"].items():
-        if not isinstance(amount, (int, float)):
+        if isinstance(amount, bool) or not isinstance(amount, (int, float)):
             return _err(f"Budget amount for '{category}' must be numeric.")
+        if not math.isfinite(amount):
+            return _err(f"Budget amount for '{category}' must be a finite number.")
+        if amount < 0:
+            return _err(f"Budget amount for '{category}' cannot be negative.")
+        total_breakdown += float(amount)
+
+    if total_budget is not None:
+        try:
+            tb = float(total_budget)
+            if math.isfinite(tb) and tb > 0:
+                if total_breakdown > tb * 1.05:
+                    return _err(
+                        f"Budget breakdown total (₹{total_breakdown:,.2f}) exceeds total budget "
+                        f"(₹{tb:,.2f}) by more than 5%."
+                    )
+        except (ValueError, TypeError):
+            pass
 
     if not isinstance(data["timeline_milestones"], list):
         return _err("'timeline_milestones' must be a list.")
@@ -277,6 +359,19 @@ def validate_ai_event_plan(data: Any) -> tuple[bool, str]:
         for key in ("task", "deadline", "priority"):
             if key not in milestone:
                 return _err(f"timeline_milestones[{i}] missing '{key}'.")
+        task = milestone["task"]
+        if not isinstance(task, str) or not task.strip():
+            return _err(f"timeline_milestones[{i}] missing non-empty 'task'.")
+        deadline = milestone["deadline"]
+        if not isinstance(deadline, str):
+            return _err(f"timeline_milestones[{i}] deadline must be a valid ISO date string.")
+        try:
+            date.fromisoformat(deadline.strip())
+        except (ValueError, TypeError):
+            return _err(f"timeline_milestones[{i}] deadline must be a valid ISO date string (YYYY-MM-DD).")
+        priority = str(milestone["priority"]).strip().lower()
+        if priority not in ("high", "medium", "low"):
+            return _err(f"timeline_milestones[{i}] priority must be 'high', 'medium', or 'low'.")
 
     if not isinstance(data["vendor_checklist"], list):
         return _err("'vendor_checklist' must be a list.")
@@ -286,6 +381,9 @@ def validate_ai_event_plan(data: Any) -> tuple[bool, str]:
             return _err(f"vendor_checklist[{i}] must be a JSON object.")
         if "category" not in vendor:
             return _err(f"vendor_checklist[{i}] missing 'category'.")
+        category = vendor["category"]
+        if not isinstance(category, str) or not category.strip():
+            return _err(f"vendor_checklist[{i}] missing non-empty 'category'.")
 
     return _ok()
 
@@ -299,6 +397,13 @@ def validate_ai_budget_suggestions(data: Any) -> tuple[bool, str]:
         "optimizations": list[{category, suggestion, potential_saving}],
         "summary": str
     }
+
+    Validation rules:
+    - data is a dict
+    - 'summary' is a string (can be empty but must exist)
+    - 'optimizations' is a list (can be empty), max 20 items
+    - Each optimization is a dict with non-empty 'category', non-empty 'suggestion',
+      and 'potential_saving' string
     """
     if not isinstance(data, dict):
         return _err("AI budget response must be a JSON object.")
@@ -308,13 +413,29 @@ def validate_ai_budget_suggestions(data: Any) -> tuple[bool, str]:
     if missing:
         return _err(f"AI budget response missing fields: {', '.join(sorted(missing))}.")
 
+    if not isinstance(data["summary"], str):
+        return _err("'summary' must be a string.")
+
     if not isinstance(data["optimizations"], list):
         return _err("'optimizations' must be a list.")
+
+    if len(data["optimizations"]) > 20:
+        return _err("'optimizations' cannot contain more than 20 items.")
 
     for i, opt in enumerate(data["optimizations"]):
         if not isinstance(opt, dict):
             return _err(f"optimizations[{i}] must be a JSON object.")
-        if "category" not in opt or "suggestion" not in opt:
-            return _err(f"optimizations[{i}] missing 'category' or 'suggestion'.")
+        if "category" not in opt:
+            return _err(f"optimizations[{i}] missing 'category'.")
+        if not isinstance(opt["category"], str) or not opt["category"].strip():
+            return _err(f"optimizations[{i}] 'category' must be a non-empty string.")
+        if "suggestion" not in opt:
+            return _err(f"optimizations[{i}] missing 'suggestion'.")
+        if not isinstance(opt["suggestion"], str) or not opt["suggestion"].strip():
+            return _err(f"optimizations[{i}] 'suggestion' must be a non-empty string.")
+        if "potential_saving" not in opt:
+            return _err(f"optimizations[{i}] missing 'potential_saving'.")
+        if not isinstance(opt["potential_saving"], str):
+            return _err(f"optimizations[{i}] 'potential_saving' must be a string.")
 
     return _ok()

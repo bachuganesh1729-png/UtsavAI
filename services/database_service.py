@@ -232,10 +232,10 @@ def update_event(event_id: int, **fields: Any) -> bool:
 
     try:
         with _get_connection() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 f"UPDATE events SET {set_clause} WHERE id = ?", values  # noqa: S608
             )
-        return True
+            return cursor.rowcount > 0
     except sqlite3.Error as exc:
         logger.error("update_event(%d) failed: %s", event_id, exc)
         return False
@@ -321,11 +321,11 @@ def update_budget_item_actual(item_id: int, actual_amount: float) -> bool:
     """Update the actual_amount on a single budget_items row."""
     try:
         with _get_connection() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 "UPDATE budget_items SET actual_amount = ?, updated_at = ? WHERE id = ?",
                 (actual_amount, _now_iso(), item_id),
             )
-        return True
+            return cursor.rowcount > 0
     except sqlite3.Error as exc:
         logger.error("update_budget_item_actual(%d) failed: %s", item_id, exc)
         return False
@@ -382,10 +382,10 @@ def update_vendor(vendor_id: int, **fields: Any) -> bool:
     values = list(to_update.values()) + [vendor_id]
     try:
         with _get_connection() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 f"UPDATE vendors SET {set_clause} WHERE id = ?", values  # noqa: S608
             )
-        return True
+            return cursor.rowcount > 0
     except sqlite3.Error as exc:
         logger.error("update_vendor(%d) failed: %s", vendor_id, exc)
         return False
@@ -464,11 +464,11 @@ def update_task_status(task_id: int, status: str) -> bool:
     """Update the status of a single timeline task."""
     try:
         with _get_connection() as conn:
-            conn.execute(
+            cursor = conn.execute(
                 "UPDATE timeline_tasks SET status = ? WHERE id = ?",
                 (status, task_id),
             )
-        return True
+            return cursor.rowcount > 0
     except sqlite3.Error as exc:
         logger.error("update_task_status(%d) failed: %s", task_id, exc)
         return False

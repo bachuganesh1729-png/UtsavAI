@@ -34,7 +34,7 @@ class BudgetItem:
     @property
     def variance(self) -> float:
         """Positive = under budget. Negative = over budget."""
-        return self.allocated_amount - self.actual_amount
+        return round(self.allocated_amount - self.actual_amount, 2)
 
     @property
     def is_over_budget(self) -> bool:
@@ -104,30 +104,30 @@ def compute_budget_summary(
             budget_items.append(
                 BudgetItem(
                     category=str(item.get("category", "Unknown")),
-                    allocated_amount=float(item.get("allocated_amount", 0.0)),
-                    actual_amount=float(item.get("actual_amount", 0.0)),
+                    allocated_amount=round(float(item.get("allocated_amount", 0.0)), 2),
+                    actual_amount=round(float(item.get("actual_amount", 0.0)), 2),
                     notes=str(item.get("notes", "")),
                 )
             )
         except (TypeError, ValueError) as exc:
             logger.warning("Skipping invalid budget item: %s | Error: %s", item, exc)
 
-    total_allocated = sum(i.allocated_amount for i in budget_items)
-    total_actual = sum(i.actual_amount for i in budget_items)
-    unallocated = max(0.0, total_budget - total_allocated)
-    total_variance = total_allocated - total_actual
+    total_allocated = round(sum(i.allocated_amount for i in budget_items), 2)
+    total_actual = round(sum(i.actual_amount for i in budget_items), 2)
+    unallocated = round(max(0.0, float(total_budget) - total_allocated), 2)
+    total_variance = round(total_allocated - total_actual, 2)
     overrun_categories = [i.category for i in budget_items if i.is_over_budget]
-    overrun_amount = sum(
+    overrun_amount = round(sum(
         abs(i.variance) for i in budget_items if i.is_over_budget
-    )
+    ), 2)
 
     return BudgetSummary(
-        total_budget=total_budget,
-        total_allocated=round(total_allocated, 2),
-        total_actual=round(total_actual, 2),
-        unallocated=round(unallocated, 2),
-        total_variance=round(total_variance, 2),
-        overrun_amount=round(overrun_amount, 2),
+        total_budget=round(float(total_budget), 2),
+        total_allocated=total_allocated,
+        total_actual=total_actual,
+        unallocated=unallocated,
+        total_variance=total_variance,
+        overrun_amount=overrun_amount,
         overrun_categories=overrun_categories,
         items=budget_items,
     )
@@ -142,7 +142,7 @@ def distribute_ai_budget(
     Convert an AI-generated budget breakdown into validated BudgetItems.
 
     Ensures:
-    - Only allowed categories are included.
+    - Only allowed categories are included (if non-empty).
     - All amounts are non-negative floats.
     - The total across all items does not exceed total_budget.
       If the AI total exceeds the budget, all amounts are scaled down
@@ -160,7 +160,6 @@ def distribute_ai_budget(
     raw_items: list[BudgetItem] = []
 
     for category, amount in ai_breakdown.items():
-        # Normalise category name (strip whitespace, title-case)
         cat = str(category).strip()
         try:
             amt = float(amount)
@@ -172,7 +171,7 @@ def distribute_ai_budget(
             logger.warning("Negative AI budget amount for '%s': %.2f — setting to 0", cat, amt)
             amt = 0.0
 
-        raw_items.append(BudgetItem(category=cat, allocated_amount=amt))
+        raw_items.append(BudgetItem(category=cat, allocated_amount=round(amt, 2)))
 
     # Compute Python total (not trusted from AI)
     python_total = sum(i.allocated_amount for i in raw_items)
@@ -184,8 +183,15 @@ def distribute_ai_budget(
             "AI budget total (%.2f) exceeds total_budget (%.2f). Scaling by %.4f.",
             python_total, total_budget, scale,
         )
+        scaled_sum = 0.0
         for item in raw_items:
             item.allocated_amount = round(item.allocated_amount * scale, 2)
+            scaled_sum += item.allocated_amount
+
+        # Fix any rounding discrepancy on the last item so the sum equals total_budget
+        diff = round(total_budget - scaled_sum, 2)
+        if diff != 0.0 and raw_items:
+            raw_items[-1].allocated_amount = round(raw_items[-1].allocated_amount + diff, 2)
 
     return raw_items
 
@@ -194,11 +200,15 @@ def calculate_per_guest_cost(total_actual: float, guest_count: int) -> float:
     """
     Calculate the per-guest cost.
 
-    Returns 0.0 if guest_count is zero (avoid ZeroDivisionError).
+    Returns 0.0 if guest_count is zero or non-positive (avoid ZeroDivisionError).
     """
-    if guest_count <= 0:
+    if isinstance(guest_count, bool) or not isinstance(guest_count, (int, float)) or guest_count <= 0:
         return 0.0
-    return round(total_actual / guest_count, 2)
+    try:
+        actual = float(total_actual)
+    except (TypeError, ValueError):
+        return 0.0
+    return round(actual / guest_count, 2)
 
 
 def suggest_default_allocation(
@@ -256,9 +266,14 @@ def suggest_default_allocation(
     items: list[BudgetItem] = []
 
     if not weights or not categories:
-        # Flat distribution if no weights defined
-        per_cat = round(total_budget / max(len(categories), 1), 2)
-        return [BudgetItem(category=c, allocated_amount=per_cat) for c in categories]
+        if not categories:
+            return []
+        per_cat = round(total_budget / len(categories), 2)
+        items = [BudgetItem(category=c, allocated_amount=per_cat) for c in categories]
+        diff = round(total_budget - sum(i.allocated_amount for i in items), 2)
+        if diff != 0.0 and items:
+            items[-1].allocated_amount = round(items[-1].allocated_amount + diff, 2)
+        return items
 
     # Only allocate for categories that appear in both the weight table and the request
     matched = [(c, weights[c]) for c in categories if c in weights]
@@ -267,7 +282,11 @@ def suggest_default_allocation(
     total_weight = sum(w for _, w in matched)
     if total_weight == 0:
         per_cat = round(total_budget / max(len(categories), 1), 2)
-        return [BudgetItem(category=c, allocated_amount=per_cat) for c in categories]
+        items = [BudgetItem(category=c, allocated_amount=per_cat) for c in categories]
+        diff = round(total_budget - sum(i.allocated_amount for i in items), 2)
+        if diff != 0.0 and items:
+            items[-1].allocated_amount = round(items[-1].allocated_amount + diff, 2)
+        return items
 
     allocated = 0.0
     for category, weight in matched:
@@ -276,11 +295,14 @@ def suggest_default_allocation(
         allocated += amount
 
     # Distribute remainder equally to unmatched categories
-    remainder = total_budget - allocated
+    remainder = round(total_budget - allocated, 2)
     if unmatched:
         per_unmatched = round(remainder / len(unmatched), 2)
         for cat in unmatched:
             items.append(BudgetItem(category=cat, allocated_amount=per_unmatched))
+        diff = round(total_budget - sum(i.allocated_amount for i in items), 2)
+        if diff != 0.0 and items:
+            items[-1].allocated_amount = round(items[-1].allocated_amount + diff, 2)
     elif items:
         # Add rounding remainder to the last matched item
         items[-1].allocated_amount = round(items[-1].allocated_amount + remainder, 2)

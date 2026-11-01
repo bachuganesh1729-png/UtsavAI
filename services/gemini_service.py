@@ -6,10 +6,11 @@ Google Gemini API integration for UtsavAI.
 Uses the official modern SDK: from google import genai
 
 Responsibilities:
-- Initialise the Gemini client from AppConfig.
+- Initialise the Gemini client from AppConfig with 30s timeout.
 - Expose typed AI call functions that return structured results.
 - Validate all AI-generated JSON before returning it to callers.
 - Handle and categorise every failure mode without crashing.
+- Never log or display API keys.
 
 Error model:
     Every public function returns an AIResult dataclass with:
@@ -39,7 +40,7 @@ import json
 import logging
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Literal, Optional
+from typing import Any, Callable, Optional
 
 from utils.config import AppConfig
 from utils.validators import validate_ai_event_plan, validate_ai_budget_suggestions
@@ -84,15 +85,21 @@ class AIResult:
 
 def _build_client(config: AppConfig):
     """
-    Build and return a google.genai.Client.
+    Build and return a google.genai.Client configured with a 30s timeout.
 
     Returns None if the API key is absent (avoids import error when key missing).
+    Never logs or exposes the API key.
     """
     if not config.ai_available:
         return None
     try:
         from google import genai  # type: ignore[import]
-        return genai.Client(api_key=config.gemini_api_key)
+        from google.genai import types  # type: ignore[import]
+
+        return genai.Client(
+            api_key=config.gemini_api_key,
+            http_options=types.HttpOptions(timeout=30.0),
+        )
     except Exception as exc:
         logger.error("Failed to build Gemini client: %s", exc)
         return None
@@ -134,6 +141,7 @@ def _extract_json(text: str) -> Optional[dict[str, Any]]:
 def _classify_api_error(exc: Exception) -> AIError:
     """
     Map a google-genai SDK exception to a structured AIError.
+    Guarantees that raw exception internals containing sensitive data are not leaked.
     """
     exc_str = str(exc).lower()
 
@@ -141,19 +149,19 @@ def _classify_api_error(exc: Exception) -> AIError:
         return AIError(
             kind=AIErrorKind.MISSING_CREDENTIALS,
             message="The Gemini API key is invalid or not authorised. Please check your configuration.",
-            detail=str(exc),
+            detail="Authentication failed (API key invalid or unauthorized)",
         )
     if "quota" in exc_str or "429" in exc_str or "resource_exhausted" in exc_str:
         return AIError(
             kind=AIErrorKind.RATE_LIMIT,
             message="Gemini API rate limit reached. Please wait a moment and try again.",
-            detail=str(exc),
+            detail="Rate limit / quota exceeded (429)",
         )
     if "timeout" in exc_str or "deadline" in exc_str or "timed out" in exc_str:
         return AIError(
             kind=AIErrorKind.TIMEOUT,
             message="The request to Gemini timed out. Please check your connection and try again.",
-            detail=str(exc),
+            detail="Request timed out after 30s",
         )
     return AIError(
         kind=AIErrorKind.API_ERROR,
@@ -168,19 +176,17 @@ def _generate_json(
     client,
     model: str,
     prompt: str,
-    validator,
+    validator: Callable[[Any], tuple[bool, str]],
 ) -> AIResult:
     """
     Call the Gemini API and return a validated AIResult.
+    Performs exactly one attempt without unlimited retries.
 
     Args:
         client:    Initialised google.genai.Client.
         model:     Model identifier string.
         prompt:    The full text prompt.
         validator: A function (data: Any) -> (bool, str) from validators.py.
-
-    The model is instructed to return JSON only. The response is parsed and
-    schema-validated before being returned.
     """
     try:
         from google.genai import types  # type: ignore[import]
@@ -190,7 +196,7 @@ def _generate_json(
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                temperature=0.4,   # Low temperature for structured, consistent output
+                temperature=0.4,
             ),
         )
 
@@ -236,7 +242,6 @@ def _generate_json(
             error.detail,
         )
         if error.kind == AIErrorKind.API_ERROR:
-            # Re-check for truly unexpected errors
             return AIResult.fail(
                 AIError(
                     kind=AIErrorKind.UNEXPECTED,
@@ -274,10 +279,6 @@ def generate_event_plan(
 
     Returns:
         AIResult with validated event plan dict, or a structured AIError.
-
-    Note:
-        Budget figures in the response are SUGGESTIONS. Arithmetic is
-        re-verified by budget_service.py before use.
     """
     if not config.ai_available:
         return AIResult.fail(
@@ -341,7 +342,12 @@ REQUIRED JSON SCHEMA:
 }}
 """
 
-    return _generate_json(client, config.gemini_model, prompt, validate_ai_event_plan)
+    return _generate_json(
+        client,
+        config.gemini_model,
+        prompt,
+        lambda d: validate_ai_event_plan(d, total_budget=total_budget),
+    )
 
 
 def generate_budget_suggestions(
@@ -363,10 +369,6 @@ def generate_budget_suggestions(
 
     Returns:
         AIResult with validated budget suggestion dict, or a structured AIError.
-
-    Note:
-        "potential_saving" values in the AI response are treated as rough
-        estimates only. Python arithmetic is used for all real calculations.
     """
     if not config.ai_available:
         return AIResult.fail(
