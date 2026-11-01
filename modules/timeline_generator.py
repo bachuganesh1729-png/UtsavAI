@@ -47,9 +47,9 @@ _STATUS_LABELS = {
 }
 
 _PRIORITY_COLOURS = {
-    "high": "#6B2D3E",
-    "medium": "#C9A84C",
-    "low": "#15803D",
+    "high": "#542C46",
+    "medium": "#C49A55",
+    "low": "#718B72",
 }
 
 
@@ -122,26 +122,26 @@ def _render_progress_section(summary, event_date_str: str) -> None:
 
     with col1:
         st.markdown(
-            render_metric_card("Total Tasks", str(summary.total_tasks), "In plan", "#C9A84C"),
+            render_metric_card("Total Tasks", str(summary.total_tasks), "In plan", "#C49A55"),
             unsafe_allow_html=True,
         )
     with col2:
         st.markdown(
-            render_metric_card("Completed", str(summary.completed), "Done", "#15803D"),
+            render_metric_card("Completed", str(summary.completed), "Done", "#718B72"),
             unsafe_allow_html=True,
         )
     with col3:
         st.markdown(
-            render_metric_card("In Progress", str(summary.in_progress), "Ongoing", "#C9A84C"),
+            render_metric_card("In Progress", str(summary.in_progress), "Ongoing", "#C49A55"),
             unsafe_allow_html=True,
         )
     with col4:
         st.markdown(
-            render_metric_card("Pending", str(summary.pending), "Not started", "#6B2D3E"),
+            render_metric_card("Pending", str(summary.pending), "Not started", "#542C46"),
             unsafe_allow_html=True,
         )
     with col5:
-        overdue_colour = "#6B2D3E" if summary.overdue > 0 else "#15803D"
+        overdue_colour = "#542C46" if summary.overdue > 0 else "#718B72"
         st.markdown(
             render_metric_card("Overdue", str(summary.overdue), "Past deadline", overdue_colour),
             unsafe_allow_html=True,
@@ -155,7 +155,7 @@ def _render_progress_section(summary, event_date_str: str) -> None:
     if event_date_str:
         days_label = format_date_relative(event_date_str)
         event_label = format_date(event_date_str)
-        colour = "#6B2D3E" if "ago" in days_label else "#15803D"
+        colour = "#542C46" if "ago" in days_label else "#718B72"
         st.markdown(
             f'<div class="banner banner-info">📅 Event date: <strong>{event_label}</strong> '
             f'— <strong style="color:{colour}">{days_label}</strong></div>',
@@ -217,7 +217,7 @@ def _render_tasks_tab(tasks: list[TimelineTask], event_date_str: str) -> None:
 
 def _render_task_row(task: TimelineTask) -> None:
     """Render a single task row with status update control."""
-    overdue_style = "background:#fff1f2; border-left:4px solid #6B2D3E;" if task.is_overdue else ""
+    overdue_style = "background:#fff1f2; border-left:4px solid #542C46;" if task.is_overdue else ""
     completed_style = "opacity:0.6;" if task.status == "completed" else ""
     priority_colour = _PRIORITY_COLOURS.get(task.priority, "#C9A84C")
 
@@ -235,7 +235,7 @@ def _render_task_row(task: TimelineTask) -> None:
                 st.markdown(f"**Notes:** {task.notes}")
             if task.is_overdue:
                 st.markdown(
-                    '<span style="color:#6B2D3E; font-weight:600;">⚠️ This task is overdue!</span>',
+                    '<span style="color:#542C46; font-weight:600;">⚠️ This task is overdue!</span>',
                     unsafe_allow_html=True,
                 )
 

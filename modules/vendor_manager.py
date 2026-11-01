@@ -161,22 +161,22 @@ def _render_vendor_metrics(vendors: list) -> None:
     col1, col2, col3, col4 = st.columns(4)
     with col1:
         st.markdown(
-            render_metric_card("Total Vendors", str(total), "In checklist", "#C9A84C"),
+            render_metric_card("Total Vendors", str(total), "In checklist", "#C49A55"),
             unsafe_allow_html=True,
         )
     with col2:
         st.markdown(
-            render_metric_card("Confirmed / Booked", str(confirmed), "Ready", "#15803D"),
+            render_metric_card("Confirmed / Booked", str(confirmed), "Ready", "#718B72"),
             unsafe_allow_html=True,
         )
     with col3:
         st.markdown(
-            render_metric_card("Pending / Contacted", str(pending + contacted), "To follow up", "#C9A84C"),
+            render_metric_card("Pending / Contacted", str(pending + contacted), "To follow up", "#C49A55"),
             unsafe_allow_html=True,
         )
     with col4:
         st.markdown(
-            render_metric_card("Cancelled", str(cancelled), "", "#6B2D3E"),
+            render_metric_card("Cancelled", str(cancelled), "", "#542C46"),
             unsafe_allow_html=True,
         )
 

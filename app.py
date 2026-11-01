@@ -34,8 +34,15 @@ st.set_page_config(
 
 # ── Internal imports (after set_page_config) ──────────────────────────────────
 from utils.config import load_config, APP_NAME, APP_TAGLINE
-from utils.styles import inject_css
+from utils.styles import inject_css, render_feature_card
 from services.database_service import initialize_database
+
+# ── Palette constants (inline HTML must match assets/styles.css) ──────────────
+_PLUM   = "#542C46"
+_GOLD   = "#C49A55"
+_ROSE   = "#C98289"
+_SAGE   = "#718B72"
+_IVORY  = "#FAF7F2"
 
 # ── Bootstrap ─────────────────────────────────────────────────────────────────
 
@@ -77,45 +84,64 @@ def _render_sidebar(config) -> str:
     with st.sidebar:
         # ── Brand header ──────────────────────────────────────────────────────
         st.markdown(
-            """
-            <div style="text-align:center; padding: 1rem 0 0.5rem;">
-                <div style="font-size:2.4rem; margin-bottom:0.2rem;">🎊</div>
+            f"""
+            <div style="text-align:center; padding: 1.2rem 0 0.6rem;">
+                <div style="font-size:2.6rem; margin-bottom:0.3rem; line-height:1;">🎊</div>
                 <h2 style="
-                    font-family: 'Cormorant Garamond', Georgia, serif;
-                    color: #FAF7F0;
-                    font-size: 1.7rem;
+                    font-family: 'Playfair Display', Georgia, serif;
+                    color: {_IVORY};
+                    font-size: 1.65rem;
                     font-weight: 700;
                     margin: 0;
                     letter-spacing: -0.01em;
+                    line-height: 1.1;
                 ">UtsavAI</h2>
+                <div style="
+                    width: 36px;
+                    height: 2px;
+                    background: {_GOLD};
+                    margin: 0.45rem auto 0.3rem;
+                    border-radius: 2px;
+                    opacity: 0.8;
+                "></div>
                 <p style="
-                    color: rgba(255,255,255,0.65);
-                    font-size: 0.72rem;
-                    margin: 0.2rem 0 0;
-                    letter-spacing: 0.05em;
-                ">Your Celebration Planner</p>
+                    color: rgba(250,247,242,0.58);
+                    font-size: 0.7rem;
+                    margin: 0;
+                    letter-spacing: 0.07em;
+                    text-transform: uppercase;
+                    font-family: 'DM Sans', system-ui, sans-serif;
+                ">Celebration Planner</p>
             </div>
             """,
             unsafe_allow_html=True,
         )
 
-        st.markdown("<hr style='border-color: rgba(201,168,76,0.4); margin: 0.8rem 0;'>", unsafe_allow_html=True)
+        st.markdown(
+            f"<hr style='border-color: rgba(196,154,85,0.25); margin: 0.7rem 0;'>",
+            unsafe_allow_html=True,
+        )
 
         # ── AI status indicator ───────────────────────────────────────────────
         if config.ai_available:
             st.markdown(
-                "<div style='text-align:center; color: #86EFAC; font-size:0.8rem; margin-bottom:0.5rem;'>"
-                "✅ AI Connected</div>",
+                f"<div style='text-align:center; color:#86EFAC; font-size:0.78rem;"
+                f" font-family:DM Sans,system-ui,sans-serif; margin-bottom:0.5rem;'>"
+                f"✦ AI Connected</div>",
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                "<div style='text-align:center; color: #FCD34D; font-size:0.8rem; margin-bottom:0.5rem;'>"
-                "⚠️ AI Offline</div>",
+                f"<div style='text-align:center; color:{_GOLD}; font-size:0.78rem;"
+                f" font-family:DM Sans,system-ui,sans-serif; margin-bottom:0.5rem;'>"
+                f"⚬ AI Offline</div>",
                 unsafe_allow_html=True,
             )
 
-        st.markdown("<hr style='border-color: rgba(201,168,76,0.3); margin: 0.5rem 0 0.8rem;'>", unsafe_allow_html=True)
+        st.markdown(
+            f"<hr style='border-color: rgba(196,154,85,0.18); margin: 0.4rem 0 0.7rem;'>",
+            unsafe_allow_html=True,
+        )
 
         # ── Navigation ────────────────────────────────────────────────────────
         selected_label = st.radio(
@@ -124,28 +150,37 @@ def _render_sidebar(config) -> str:
             label_visibility="collapsed",
         )
 
-        st.markdown("<hr style='border-color: rgba(201,168,76,0.3); margin: 0.8rem 0;'>", unsafe_allow_html=True)
+        st.markdown(
+            f"<hr style='border-color: rgba(196,154,85,0.18); margin: 0.7rem 0;'>",
+            unsafe_allow_html=True,
+        )
 
         # ── Active event indicator ────────────────────────────────────────────
         active_id = st.session_state.get("active_event_id")
         if active_id:
             st.markdown(
-                f"<div style='color:rgba(255,255,255,0.7); font-size:0.78rem; text-align:center;'>"
-                f"📋 Active event: <strong style='color:#FAF7F0;'>#{active_id}</strong></div>",
+                f"<div style='color:rgba(250,247,242,0.65); font-size:0.75rem;"
+                f" text-align:center; font-family:DM Sans,system-ui,sans-serif;'>"
+                f"📋 Active event<br>"
+                f"<strong style='color:{_IVORY}; font-size:0.85rem;'>#{active_id}</strong>"
+                f"</div>",
                 unsafe_allow_html=True,
             )
         else:
             st.markdown(
-                "<div style='color:rgba(255,255,255,0.55); font-size:0.78rem; text-align:center;'>"
-                "No active event selected</div>",
+                f"<div style='color:rgba(250,247,242,0.42); font-size:0.75rem;"
+                f" text-align:center; font-family:DM Sans,system-ui,sans-serif;'>"
+                f"No active event</div>",
                 unsafe_allow_html=True,
             )
 
         # ── Model info (dev reference) ────────────────────────────────────────
         if config.ai_available:
             st.markdown(
-                f"<div style='color:rgba(255,255,255,0.35); font-size:0.68rem; text-align:center; margin-top:1rem;'>"
-                f"Model: {config.gemini_model}</div>",
+                f"<div style='color:rgba(250,247,242,0.28); font-size:0.65rem;"
+                f" text-align:center; margin-top:1rem;"
+                f" font-family:DM Sans,system-ui,sans-serif;'>"
+                f"{config.gemini_model}</div>",
                 unsafe_allow_html=True,
             )
 
@@ -188,12 +223,15 @@ def _render_persistence_note() -> None:
     because Streamlit Community Cloud does not guarantee persistence
     and users must be aware of this regardless of platform.
     """
-    st.info(
-        "🗄️  **Data Persistence Note:** UtsavAI uses a local SQLite database. "
-        "On **Streamlit Community Cloud**, data is stored in an ephemeral filesystem "
-        "and **will be lost when the app restarts or redeploys**. "
-        "For local use, data persists normally between sessions.",
-        icon=None,
+    st.markdown(
+        """
+        <div class="banner banner-info" style="margin-bottom:0;">
+        🗄️ <strong>Data Persistence:</strong> UtsavAI uses a local SQLite database.
+        On Streamlit Community Cloud, data is stored in an ephemeral filesystem and
+        <strong>will be lost on restart or redeploy</strong>. For local use, data persists normally.
+        </div>
+        """,
+        unsafe_allow_html=True,
     )
 
 
@@ -205,6 +243,7 @@ def _render_hero() -> None:
         f"""
         <div class="utsav-hero">
             <h1>🎊 {APP_NAME}</h1>
+            <div class="hero-rule"></div>
             <p class="tagline">{APP_TAGLINE}</p>
         </div>
         """,
@@ -220,34 +259,46 @@ def _render_dashboard(config) -> None:
     _render_ai_warning(config.ai_available)
     _render_persistence_note()
 
-    st.markdown("---")
-    st.markdown("### Welcome to UtsavAI")
+    st.markdown("<div class='gold-divider'></div>", unsafe_allow_html=True)
+
     st.markdown(
-        "Use the **navigation panel** on the left to get started. Here is what each module does:"
+        f"<h3 style='font-family:Playfair Display,Georgia,serif; color:{_PLUM};"
+        f" margin-bottom:0.3rem;'>Welcome to UtsavAI</h3>"
+        f"<p style='color:#5C4A52; font-size:0.92rem; margin-bottom:1.2rem;'>"
+        f"Use the navigation panel on the left to get started. "
+        f"Here is what each module does:</p>",
+        unsafe_allow_html=True,
     )
 
+    # Feature cards — alternating accent colours across the palette
     features = [
-        ("🎉", "AI Event Planner",  "Generate a personalised event plan with budget breakdown, timeline and vendor checklist — powered by Gemini AI."),
-        ("💰", "Budget Manager",    "Allocate your budget across categories, track actual spending and identify overruns with interactive charts."),
-        ("📅", "Timeline",          "View and manage your preparation schedule. Track task completion and stay on top of deadlines."),
-        ("🤝", "Vendor Manager",    "Add, edit and track vendors. Know who is booked, who is pending and who needs follow-up."),
-        ("💬", "AI Assistant",      "Ask questions about your event. Get suggestions on budget, arrangements and cultural traditions."),
+        ("🎉", "AI Event Planner",
+         "Generate a personalised event plan with budget breakdown, timeline and vendor checklist — powered by Gemini AI.",
+         "card-plum-top"),
+        ("💰", "Budget Manager",
+         "Allocate your budget across categories, track actual spending and identify overruns with interactive charts.",
+         "card-gold-top"),
+        ("📅", "Timeline",
+         "View and manage your preparation schedule. Track task completion and stay on top of every deadline.",
+         "card-rose-top"),
+        ("🤝", "Vendor Manager",
+         "Add, edit and track vendors. Know who is booked, who is pending and who needs follow-up.",
+         "card-sage-top"),
+        ("💬", "AI Assistant",
+         "Ask questions about your event. Get suggestions on budget, arrangements and cultural traditions.",
+         "card-gold-top"),
     ]
 
     cols = st.columns(3)
-    for idx, (icon, title, desc) in enumerate(features):
+    for idx, (icon, title, desc, accent) in enumerate(features):
         with cols[idx % 3]:
             st.markdown(
-                f"""
-                <div class="metric-card" style="border-top: 4px solid {'#6B2D3E' if idx % 2 == 0 else '#C9A84C'}; min-height: 160px;">
-                    <p style="font-size:2rem; margin:0 0 0.4rem;">{icon}</p>
-                    <p style="font-weight:600; color:#2C1810; font-size:0.95rem; margin:0 0 0.4rem;">{title}</p>
-                    <p style="font-size:0.83rem; color:#8A6A5A; margin:0; line-height:1.5;">{desc}</p>
-                </div>
-                """,
+                render_feature_card(icon, title, desc, accent),
                 unsafe_allow_html=True,
             )
+        # Start a new row after every 3 cards
         if (idx + 1) % 3 == 0 and idx < len(features) - 1:
+            st.markdown("<div style='margin-top:1rem;'></div>", unsafe_allow_html=True)
             cols = st.columns(3)
 
     st.markdown(
@@ -266,7 +317,7 @@ def _render_dashboard(config) -> None:
 # Phase 1 stubs — replaced by full module implementations in Phase 2.
 
 def _render_stub(title: str, icon: str, description: str, config) -> None:
-    """Render a placeholder page for modules not yet implemented in Phase 1."""
+    """Render a placeholder page for modules not yet implemented."""
     _render_ai_warning(config.ai_available)
     st.markdown(f"## {icon} {title}")
     st.info(

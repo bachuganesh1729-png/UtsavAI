@@ -567,7 +567,7 @@ def _render_existing_events_tab(config) -> None:
     for evt in events:
         eid = evt["id"]
         is_active = eid == active_id
-        border_colour = "#6B2D3E" if is_active else "#E0D5C5"
+        border_colour = "#542C46" if is_active else "#E0D5C5"
         active_badge = " 🟢 **Active**" if is_active else ""
 
         with st.expander(

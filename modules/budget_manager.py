@@ -120,7 +120,7 @@ def _render_budget_manager_body(config, event: dict) -> None:
 def _render_metrics_row(summary, guest_count: int) -> None:
     col1, col2, col3, col4 = st.columns(4)
 
-    status_colour = "#6B2D3E" if summary.is_over_budget else "#15803D"
+    status_colour = "#542C46" if summary.is_over_budget else "#718B72"
 
     with col1:
         st.markdown(
@@ -128,7 +128,7 @@ def _render_metrics_row(summary, guest_count: int) -> None:
                 "Total Budget",
                 format_currency_compact(summary.total_budget),
                 "Event total",
-                "#C9A84C",
+                "#C49A55",
             ),
             unsafe_allow_html=True,
         )
@@ -138,7 +138,7 @@ def _render_metrics_row(summary, guest_count: int) -> None:
                 "Total Allocated",
                 format_currency_compact(summary.total_allocated),
                 f"{summary.allocation_pct:.1f}% of budget",
-                "#6B2D3E",
+                "#542C46",
             ),
             unsafe_allow_html=True,
         )
@@ -160,7 +160,7 @@ def _render_metrics_row(summary, guest_count: int) -> None:
                 "Remaining",
                 format_currency_compact(max(0.0, remaining)),
                 f"Per guest: {format_currency(per_guest)}" if guest_count > 0 else "",
-                "#15803D" if remaining >= 0 else "#6B2D3E",
+                "#718B72" if remaining >= 0 else "#542C46",
             ),
             unsafe_allow_html=True,
         )
@@ -199,14 +199,14 @@ def _render_overview_tab(summary, total_budget: float) -> None:
             name="Allocated",
             x=categories,
             y=allocated,
-            marker_color="#6B2D3E",
+            marker_color="#542C46",
             opacity=0.85,
         ))
         fig_bar.add_trace(go.Bar(
             name="Actual Spent",
             x=categories,
             y=actual,
-            marker_color="#C9A84C",
+            marker_color="#C49A55",
             opacity=0.85,
         ))
         fig_bar.update_layout(
@@ -217,7 +217,7 @@ def _render_overview_tab(summary, total_budget: float) -> None:
             xaxis_tickangle=-45,
             plot_bgcolor="rgba(0,0,0,0)",
             paper_bgcolor="rgba(0,0,0,0)",
-            font=dict(family="Inter, sans-serif", size=11),
+            font=dict(family="DM Sans, sans-serif", size=11),
         )
         fig_bar.update_yaxes(tickprefix="₹", tickformat=",.0f")
         st.plotly_chart(fig_bar, use_container_width=True)
@@ -232,10 +232,10 @@ def _render_overview_tab(summary, total_budget: float) -> None:
                 values=list(alloc_nz),
                 hole=0.45,
                 marker_colors=[
-                    "#6B2D3E", "#C9A84C", "#8B3A4E", "#A07830",
-                    "#4A1E2B", "#D4A853", "#7A3048", "#B8962E",
-                    "#923650", "#C49040", "#5C2436", "#E0B060",
-                    "#6E2A3C", "#967030",
+                    "#542C46", "#C49A55", "#7A3D60", "#A07830",
+                    "#6B4E71", "#D4A853", "#8B5A78", "#B8962E",
+                    "#C98289", "#C49040", "#718B72", "#E0B060",
+                    "#9B6B82", "#967030",
                 ],
                 textinfo="label+percent",
                 textfont_size=10,
@@ -246,11 +246,11 @@ def _render_overview_tab(summary, total_budget: float) -> None:
                 showlegend=False,
                 plot_bgcolor="rgba(0,0,0,0)",
                 paper_bgcolor="rgba(0,0,0,0)",
-                font=dict(family="Inter, sans-serif", size=11),
+                font=dict(family="DM Sans, sans-serif", size=11),
                 annotations=[dict(
                     text=format_currency_compact(sum(alloc_nz)),
                     x=0.5, y=0.5, font_size=14, showarrow=False,
-                    font=dict(color="#4A1E2B", family="Cormorant Garamond, serif"),
+                    font=dict(color="#542C46", family="Playfair Display, serif"),
                 )],
             )
             st.plotly_chart(fig_donut, use_container_width=True)
