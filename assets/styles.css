@@ -1,0 +1,674 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   UtsavAI — Global Styles  v2.0
+   Design direction: Premium Indian Celebration · Luxury SaaS Dashboard
+
+   Palette:
+     Ivory background    #FAF7F2
+     Deep Plum (primary) #542C46
+     Mid Plum            #6B3A5A
+     Champagne Gold      #C49A55
+     Dark Gold           #A07D38
+     Muted Rose          #C98289
+     Sage Green          #718B72
+     Charcoal text       #292524
+     Medium text         #5C4A52
+     Light text          #9C8A93
+     Card white          #FFFFFF
+     Surface / alt bg    #F5EFF6
+     Border              #E8DDE4
+
+   Fonts: Playfair Display (headings) + DM Sans (body)
+   Both served by Google Fonts — no extra dependencies.
+═══════════════════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,500;0,600;0,700;1,500&family=DM+Sans:wght@300;400;500;600&display=swap');
+
+/* ── CSS custom properties ─────────────────────────────────────────────────── */
+:root {
+  /* Colours */
+  --ivory:         #FAF7F2;
+  --surface:       #F5EFF6;
+  --plum:          #542C46;
+  --plum-mid:      #6B3A5A;
+  --plum-light:    #8A5070;
+  --plum-xlight:   #EDE0EA;
+  --gold:          #C49A55;
+  --gold-dark:     #A07D38;
+  --gold-light:    #F0E0C0;
+  --rose:          #C98289;
+  --rose-light:    #F5E4E5;
+  --sage:          #718B72;
+  --sage-light:    #E2EDE2;
+  --text:          #292524;
+  --text-mid:      #5C4A52;
+  --text-light:    #9C8A93;
+  --white:         #FFFFFF;
+  --border:        #E8DDE4;
+  --border-strong: #D4C5CE;
+
+  /* Shadows — plum-tinted, not black */
+  --shadow-xs:  0 1px 3px rgba(84, 44, 70, 0.06);
+  --shadow-sm:  0 2px 8px rgba(84, 44, 70, 0.09);
+  --shadow-md:  0 4px 20px rgba(84, 44, 70, 0.12);
+  --shadow-lg:  0 8px 32px rgba(84, 44, 70, 0.15);
+
+  /* Radii */
+  --r-sm:  6px;
+  --r-md:  12px;
+  --r-lg:  18px;
+  --r-xl:  24px;
+
+  /* Transitions */
+  --t-fast:   0.15s ease;
+  --t-normal: 0.25s ease;
+}
+
+/* ── Base Streamlit resets ──────────────────────────────────────────────────── */
+html, body,
+[data-testid="stAppViewContainer"],
+[data-testid="stApp"] {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--text);
+  background-color: var(--ivory);
+}
+
+[data-testid="stMain"],
+[data-testid="stMainBlockContainer"] {
+  background-color: var(--ivory);
+}
+
+/* Remove default Streamlit top padding */
+[data-testid="stMainBlockContainer"] {
+  padding-top: 1.5rem;
+}
+
+/* ── Sidebar ────────────────────────────────────────────────────────────────── */
+[data-testid="stSidebar"] {
+  background: var(--plum) !important;
+  border-right: 1px solid rgba(196, 154, 85, 0.18);
+}
+
+[data-testid="stSidebar"] > div:first-child {
+  background: var(--plum) !important;
+}
+
+[data-testid="stSidebar"] * {
+  color: rgba(250, 247, 242, 0.90) !important;
+}
+
+[data-testid="stSidebar"] .stRadio label {
+  color: rgba(250, 247, 242, 0.82) !important;
+  font-size: 0.9rem;
+  font-weight: 400;
+  padding: 6px 2px;
+  transition: color var(--t-fast);
+}
+
+[data-testid="stSidebar"] .stRadio label:hover {
+  color: #FAF7F2 !important;
+}
+
+/* Sidebar radio selected state */
+[data-testid="stSidebar"] [data-testid="stRadio"] [aria-checked="true"] + div label,
+[data-testid="stSidebar"] .stRadio [aria-checked="true"] ~ label {
+  color: var(--gold) !important;
+  font-weight: 600;
+}
+
+[data-testid="stSidebar"] hr {
+  border-color: rgba(196, 154, 85, 0.25) !important;
+  margin: 0.75rem 0;
+}
+
+/* ── Typography ─────────────────────────────────────────────────────────────── */
+h1, h2, h3 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--plum);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+}
+
+h1 { font-size: 2.5rem; font-weight: 700; }
+h2 { font-size: 1.9rem; font-weight: 600; }
+h3 { font-size: 1.45rem; font-weight: 600; }
+h4 { font-size: 1.15rem; font-weight: 600; font-family: 'Playfair Display', Georgia, serif; color: var(--plum); }
+
+p, li {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.94rem;
+  line-height: 1.7;
+  color: var(--text-mid);
+}
+
+label {
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.88rem;
+  font-weight: 500;
+  color: var(--text-mid);
+}
+
+code {
+  background: var(--plum-xlight);
+  color: var(--plum);
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 0.85em;
+}
+
+/* ── Hero / page header ─────────────────────────────────────────────────────── */
+.utsav-hero {
+  background: var(--plum);
+  border-radius: var(--r-xl);
+  padding: 2.8rem 2.8rem 2.4rem;
+  margin-bottom: 1.8rem;
+  color: var(--ivory);
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(196, 154, 85, 0.2);
+}
+
+/* Decorative corner mandala motif — pure CSS, no image required */
+.utsav-hero::before {
+  content: '❋';
+  position: absolute;
+  top: -12px;
+  right: 28px;
+  font-size: 9rem;
+  color: rgba(196, 154, 85, 0.08);
+  pointer-events: none;
+  line-height: 1;
+  user-select: none;
+}
+
+.utsav-hero::after {
+  content: '❋';
+  position: absolute;
+  bottom: -16px;
+  left: 18px;
+  font-size: 6rem;
+  color: rgba(196, 154, 85, 0.06);
+  pointer-events: none;
+  line-height: 1;
+  user-select: none;
+}
+
+.utsav-hero h1 {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--ivory);
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.02em;
+}
+
+.utsav-hero .tagline {
+  font-size: 1rem;
+  color: rgba(250, 247, 242, 0.72);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  margin: 0;
+}
+
+.utsav-hero .gold-accent {
+  color: var(--gold);
+  font-weight: 600;
+}
+
+/* Gold accent line below hero title */
+.utsav-hero .hero-rule {
+  width: 52px;
+  height: 2px;
+  background: var(--gold);
+  margin: 0.9rem 0 0.7rem;
+  border-radius: 2px;
+  opacity: 0.85;
+}
+
+/* ── Cards ──────────────────────────────────────────────────────────────────── */
+.metric-card {
+  background: var(--white);
+  border-radius: var(--r-md);
+  padding: 1.35rem 1.5rem 1.25rem;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  transition: box-shadow var(--t-normal), transform var(--t-normal);
+  position: relative;
+  overflow: hidden;
+}
+
+.metric-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.metric-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: var(--text-light);
+  margin: 0 0 0.35rem;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.metric-value {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--plum);
+  margin: 0;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.metric-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-light);
+  margin: 0.3rem 0 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* Feature cards on dashboard */
+.feature-card {
+  background: var(--white);
+  border-radius: var(--r-md);
+  padding: 1.6rem 1.5rem;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-xs);
+  transition: box-shadow var(--t-normal), transform var(--t-normal), border-color var(--t-normal);
+  min-height: 160px;
+  position: relative;
+  overflow: hidden;
+}
+
+.feature-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-3px);
+  border-color: var(--border-strong);
+}
+
+.feature-card .icon {
+  font-size: 1.9rem;
+  margin-bottom: 0.55rem;
+  display: block;
+  line-height: 1;
+}
+
+.feature-card .feature-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-weight: 600;
+  color: var(--plum);
+  font-size: 1rem;
+  margin: 0 0 0.4rem;
+}
+
+.feature-card .feature-desc {
+  font-size: 0.83rem;
+  color: var(--text-mid);
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ── Section headers ─────────────────────────────────────────────────────────── */
+.section-header {
+  border-left: 3px solid var(--gold);
+  padding-left: 1rem;
+  margin: 1.6rem 0 1.1rem;
+}
+
+.section-title {
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--plum);
+  margin: 0;
+  letter-spacing: -0.01em;
+}
+
+.section-subtitle {
+  font-size: 0.86rem;
+  color: var(--text-light);
+  margin: 0.2rem 0 0;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ── Page title (used inside modules) ─────────────────────────────────────── */
+.page-title-bar {
+  display: flex;
+  align-items: baseline;
+  gap: 0.75rem;
+  margin-bottom: 1.4rem;
+  padding-bottom: 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.page-title-bar h2 {
+  margin: 0;
+  font-size: 1.7rem;
+}
+
+.page-title-bar .page-subtitle {
+  font-size: 0.87rem;
+  color: var(--text-light);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ── Status pills ────────────────────────────────────────────────────────────── */
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 9px;
+  border-radius: 20px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  white-space: nowrap;
+}
+
+.status-pending    { background: #FEF3C7; color: #92400E; border: 1px solid #FCD34D; }
+.status-contacted  { background: #EFF6FF; color: #1E40AF; border: 1px solid #BFDBFE; }
+.status-booked     { background: var(--sage-light); color: #3A5C3B; border: 1px solid #A3C4A3; }
+.status-confirmed  { background: var(--sage-light); color: #3A5C3B; border: 1px solid #A3C4A3; }
+.status-cancelled  { background: var(--rose-light); color: #7F1D1D; border: 1px solid #FCA5A5; }
+.status-in-progress { background: var(--plum-xlight); color: var(--plum); border: 1px solid #D8B4D5; }
+.status-completed  { background: var(--sage-light); color: #3A5C3B; border: 1px solid #A3C4A3; }
+
+/* ── Banners ─────────────────────────────────────────────────────────────────── */
+.banner {
+  border-radius: var(--r-sm);
+  padding: 0.85rem 1.1rem;
+  margin: 0.85rem 0;
+  font-size: 0.88rem;
+  font-weight: 500;
+  border-left: 4px solid;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  line-height: 1.6;
+}
+
+.banner-info    {
+  background: #EFF6FF;
+  border-color: #3B82F6;
+  color: #1E3A8A;
+}
+.banner-warning {
+  background: var(--gold-light);
+  border-color: var(--gold);
+  color: #7A5C1A;
+}
+.banner-success {
+  background: var(--sage-light);
+  border-color: var(--sage);
+  color: #2D5A2E;
+}
+.banner-error   {
+  background: var(--rose-light);
+  border-color: var(--rose);
+  color: #7F1D1D;
+}
+
+/* ── AI unavailable banner ───────────────────────────────────────────────────── */
+.ai-unavailable-banner {
+  background: var(--gold-light);
+  border: 1px solid rgba(196, 154, 85, 0.4);
+  border-left: 4px solid var(--gold);
+  border-radius: var(--r-md);
+  padding: 1.1rem 1.4rem;
+  margin-bottom: 1.4rem;
+}
+
+.ai-unavailable-banner h4 {
+  font-family: 'Playfair Display', Georgia, serif;
+  color: var(--gold-dark);
+  font-size: 1.1rem;
+  margin: 0 0 0.4rem;
+  font-weight: 600;
+}
+
+.ai-unavailable-banner p {
+  color: #6B4D1A;
+  font-size: 0.87rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.ai-unavailable-banner a {
+  color: var(--plum);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
+/* ── Gold decorative divider ─────────────────────────────────────────────────── */
+.gold-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent 0%, var(--gold) 40%, var(--gold) 60%, transparent 100%);
+  border: none;
+  margin: 1.8rem 0;
+  opacity: 0.45;
+}
+
+/* ── Persistence note ────────────────────────────────────────────────────────── */
+.cloud-persistence-note {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  padding: 0.65rem 0.95rem;
+  font-size: 0.8rem;
+  color: var(--text-mid);
+  margin-top: 0.8rem;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ── Streamlit widget overrides ──────────────────────────────────────────────── */
+
+/* ─ Primary buttons ─ */
+.stButton > button {
+  background: var(--plum);
+  color: var(--ivory);
+  border: none;
+  border-radius: var(--r-sm);
+  font-weight: 600;
+  font-size: 0.88rem;
+  padding: 0.55rem 1.35rem;
+  transition: background var(--t-fast), box-shadow var(--t-fast), transform var(--t-fast);
+  letter-spacing: 0.02em;
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+.stButton > button:hover {
+  background: var(--plum-mid);
+  box-shadow: 0 4px 14px rgba(84, 44, 70, 0.28);
+  transform: translateY(-1px);
+}
+
+.stButton > button:active {
+  transform: translateY(0);
+  box-shadow: none;
+}
+
+.stButton > button:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 3px;
+}
+
+/* ─ Input fields ─ */
+.stTextInput > div > div > input,
+.stTextArea > div > div > textarea,
+.stNumberInput > div > div > input {
+  border: 1.5px solid var(--border-strong);
+  border-radius: var(--r-sm);
+  background: var(--white);
+  color: var(--text);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.9rem;
+  transition: border-color var(--t-fast), box-shadow var(--t-fast);
+}
+
+.stTextInput > div > div > input:focus,
+.stTextArea > div > div > textarea:focus,
+.stNumberInput > div > div > input:focus {
+  border-color: var(--plum) !important;
+  box-shadow: 0 0 0 3px rgba(84, 44, 70, 0.10);
+  outline: none;
+}
+
+/* ─ Selectbox ─ */
+.stSelectbox > div > div {
+  border: 1.5px solid var(--border-strong) !important;
+  border-radius: var(--r-sm) !important;
+  background: var(--white) !important;
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+  font-size: 0.9rem !important;
+}
+
+/* ─ Tabs ─ */
+.stTabs [data-baseweb="tab-list"] {
+  gap: 3px;
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+
+.stTabs [data-baseweb="tab"] {
+  border-radius: var(--r-sm);
+  color: var(--text-mid);
+  font-weight: 500;
+  font-size: 0.86rem;
+  padding: 0.42rem 1rem;
+  transition: color var(--t-fast), background var(--t-fast);
+  font-family: 'DM Sans', system-ui, sans-serif;
+  border: none;
+}
+
+.stTabs [data-baseweb="tab"]:hover {
+  color: var(--plum);
+  background: rgba(84, 44, 70, 0.06);
+}
+
+.stTabs [aria-selected="true"] {
+  background: var(--white) !important;
+  color: var(--plum) !important;
+  font-weight: 600;
+  box-shadow: var(--shadow-xs);
+}
+
+/* ─ Expander ─ */
+.streamlit-expanderHeader,
+[data-testid="stExpander"] summary {
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  font-weight: 500;
+  color: var(--plum) !important;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  font-size: 0.9rem;
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.9rem;
+}
+
+[data-testid="stExpander"] {
+  border: 1px solid var(--border);
+  border-radius: var(--r-sm);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+/* ─ Progress bar ─ */
+[data-testid="stProgressBar"] > div {
+  background: var(--plum-xlight);
+  border-radius: 20px;
+  height: 8px;
+}
+
+[data-testid="stProgressBar"] > div > div {
+  background: linear-gradient(90deg, var(--plum), var(--plum-light));
+  border-radius: 20px;
+  transition: width 0.4s ease;
+}
+
+/* ─ Dataframe / table ─ */
+.stDataFrame,
+[data-testid="stDataFrame"] {
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  box-shadow: var(--shadow-xs);
+}
+
+/* ─ st.info / st.warning / st.success / st.error callouts ─ */
+[data-testid="stAlert"] {
+  border-radius: var(--r-sm) !important;
+  font-family: 'DM Sans', system-ui, sans-serif !important;
+  font-size: 0.88rem !important;
+}
+
+/* ─ Chat messages ─ */
+[data-testid="stChatMessage"] {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--r-md);
+  box-shadow: var(--shadow-xs);
+  font-family: 'DM Sans', system-ui, sans-serif;
+}
+
+/* ─ Multiselect tags ─ */
+[data-baseweb="tag"] {
+  background: var(--plum-xlight) !important;
+  color: var(--plum) !important;
+  border-radius: 20px !important;
+  font-size: 0.8rem !important;
+}
+
+/* ─ Checkbox ─ */
+[data-testid="stCheckbox"] label {
+  font-size: 0.88rem;
+  font-family: 'DM Sans', system-ui, sans-serif;
+  color: var(--text-mid);
+}
+
+/* ─ Spinner ─ */
+[data-testid="stSpinner"] {
+  color: var(--plum) !important;
+}
+
+/* ─ Horizontal rule ─ */
+hr {
+  border-color: var(--border);
+  margin: 1.4rem 0;
+}
+
+/* ── Utility helpers ─────────────────────────────────────────────────────────── */
+
+/* Thin gold top bar on any card */
+.card-gold-top {
+  border-top: 3px solid var(--gold);
+}
+
+.card-plum-top {
+  border-top: 3px solid var(--plum);
+}
+
+.card-rose-top {
+  border-top: 3px solid var(--rose);
+}
+
+.card-sage-top {
+  border-top: 3px solid var(--sage);
+}
+
+/* Text utilities */
+.text-plum  { color: var(--plum); }
+.text-gold  { color: var(--gold); }
+.text-rose  { color: var(--rose); }
+.text-sage  { color: var(--sage); }
+.text-muted { color: var(--text-light); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .utsav-hero { padding: 2rem 1.4rem 1.8rem; }
+  .utsav-hero h1 { font-size: 2.1rem; }
+  .metric-value { font-size: 1.7rem; }
+  .section-title { font-size: 1.35rem; }
+  .utsav-hero::before { font-size: 6rem; }
+}
